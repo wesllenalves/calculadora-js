@@ -67,25 +67,62 @@ class CalController {
         this._operation.pop();
 
     }
+
+    //pega a operação/operador
+    pushOperation(value){
+        this._operation.push(value);
+
+        if(this._operation.length > 3){
+            
+
+            this.calc();
+
+            console.log(this._operation);
+        }
+    }
+
+    //faz o calculo das operações
+    calc(){
+        let last = this._operation.pop();
+        let result = eval(this._operation.join(""));
+        this._operation = [result, last];
+        this.setLastNumbertoDisplay();
+    }
+
+    //verifica dentro do array se é uma operação o valor que vem
     isOperatior(value){
         return (['+', '-', '*', '/', '%'].indexOf(value) > -1);
     }
 
+    //pega o valor do ultimo digito dentro do array
     getLastOperation() {
  
         return this._operation[this._operation.length - 1];
      
     }
      
+    //seta o valor do ultimo digito dentro do array
     setLastOperation(value) {
      
-        this._operation[this._operation.length - 1] = value;
+        this._operation[ this._operation.length - 1] = value;
      
     }
-    //metodo que coloca cada valor em sequencia dentro de uma array adiciona cada valor no final de um array
-    addOperatin(value){
-        console.log('A', isNaN(this.getLastOperation()));
 
+    //seta no display a conta efetuada
+    setLastNumbertoDisplay(){
+        let lastNumber ;
+        for(let i = this._operation.length-1; i >= 0; i--){
+            if(!this.isOperatior(this._operation[i])){
+                lastNumber = this._operation[i];
+                break;
+            }
+        }
+
+        this.displayCal = lastNumber;
+    }
+    //metodo que coloca cada valor em sequencia dentro de uma array adiciona cada valor no final de um array fazendo verificações
+    addOperatin(value){
+        
         if (isNaN(this.getLastOperation())){
 
             //String
@@ -97,20 +134,24 @@ class CalController {
             }else if(isNaN(value)) {
 
                 //outra coisas
-                console.log(value);
+                console.log('outra coisas', value);
 
             }else{
-
-                this._operation.push(value);
+                this.pushOperation(value);
+                this.setLastNumbertoDisplay();
             }
         }else{
-            //numero
-            let newValue = this.getLastOperation().toString() + value.toString();
-            this.setLastOperation(parseInt(newValue));
+            if(this.isOperatior(value)){
+                this.pushOperation(value);
+            }else{
+                let newValue = this.getLastOperation().toString() + value.toString();
+                this.setLastOperation(parseInt(newValue));
+                //atualizar display
+                this.setLastNumbertoDisplay();
+            }
+            
         }
 
-        
-        console.log(this._operation);
     }
 
     //metodo que apresenta error no display
