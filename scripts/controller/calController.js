@@ -67,9 +67,49 @@ class CalController {
         this._operation.pop();
 
     }
+    isOperatior(value){
+        return (['+', '-', '*', '/', '%'].indexOf(value) > -1);
+    }
+
+    getLastOperation() {
+ 
+        return this._operation[this._operation.length - 1];
+     
+    }
+     
+    setLastOperation(value) {
+     
+        this._operation[this._operation.length - 1] = value;
+     
+    }
     //metodo que coloca cada valor em sequencia dentro de uma array adiciona cada valor no final de um array
     addOperatin(value){
-        this._operation.push(value);
+        console.log('A', isNaN(this.getLastOperation()));
+
+        if (isNaN(this.getLastOperation())){
+
+            //String
+            if(this.isOperatior(value)){
+                //tocar o operador   
+
+                this.setLastOperation(value);
+
+            }else if(isNaN(value)) {
+
+                //outra coisas
+                console.log(value);
+
+            }else{
+
+                this._operation.push(value);
+            }
+        }else{
+            //numero
+            let newValue = this.getLastOperation().toString() + value.toString();
+            this.setLastOperation(parseInt(newValue));
+        }
+
+        
         console.log(this._operation);
     }
 
@@ -95,27 +135,28 @@ class CalController {
             this.clearEntry();
             break;
             case 'soma': 
-            this.clearEntry();
+            this.addOperatin('+');
             break;
-            case 'subtrai': 
-            this.clearEntry();
+            case 'subtracao': 
+            this.addOperatin('-');
             break;
             case 'multiplicacao': 
-            this.clearEntry();
+            this.addOperatin('*');
             break;
             case 'divisao': 
-            this.clearEntry();
+            this.addOperatin('/');
             break;
             case 'porcento': 
-            this.clearEntry();
+            this.addOperatin('%');
             break;
             case 'igual': 
             this.clearEntry();
             break;
-            default:
-            this.setError()
+            case 'ponto': 
+
             break;
 
+            case '0':
             case '1':
             case '2':
             case '3':
@@ -126,6 +167,11 @@ class CalController {
             case '8':
             case '9':
                 this.addOperatin(parseInt(value));
+            break;
+
+            
+            default:
+            this.setError()
             break;
         }
     }
