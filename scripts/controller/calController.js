@@ -2,6 +2,8 @@
 class CalController {
     //criando metodos
     constructor(){
+        this._lastOperator = '';
+        this._lastNumber = '';
         this._operation = [];
         this._locale = 'pt-BR';
         this._displayCalcEl =   document.querySelector("#display");
@@ -54,17 +56,22 @@ class CalController {
         setInterval(()=>{
             this.setDisplayDateTime();
         }, 1000);
+
+        this.setLastNumbertoDisplay();
       
     }
     //metodo que vai limpar todo o o array tornando vazio
     clearAll(){
         this._operation = [];
 
+        this.setLastNumbertoDisplay();
+
     }
 
     //metodo que vai limpar o ultimo valor colocado dentro de um array ou o ultimo valor de um array
     clearEntry(){
         this._operation.pop();
+        this.setLastNumbertoDisplay();
 
     }
 
@@ -80,12 +87,44 @@ class CalController {
             console.log(this._operation);
         }
     }
+    getResult(){
+
+        return eval(this._operation.join(""));
+    }
 
     //faz o calculo das operações
     calc(){
-        let last = this._operation.pop();
-        let result = eval(this._operation.join(""));
-        this._operation = [result, last];
+        let last = '';
+        this._lastOperator = this.getLastIntem();
+
+        if(this._operation.length < 3){
+            let firstItem = this._operation[0];
+            this._operation = [firstItem, this._lastOperator, this._lastNumber];
+        }
+
+        if(this._operation.length > 3){
+
+            last = this._operation.pop();
+            this._lastNumber = this.getResult();
+            
+        }else if(this._operation.length === 3){
+
+            this._lastNumber = this.getLastIntem(false);            
+        }
+        
+        let result = this.getResult();
+
+        if(last == '%'){
+            result /= 100;
+            this._operation = [result];
+        }else{
+
+            this._operation = [result];
+
+            if(last) this._operation.push(last);
+        }
+        
+        
         this.setLastNumbertoDisplay();
     }
 
@@ -108,16 +147,27 @@ class CalController {
      
     }
 
+    getLastIntem(isOperator = true){
+        let lastItem ;
+        for(let i = this._operation.length-1; i >= 0; i--){
+
+                if(this.isOperatior(this._operation[i]) == isOperator){
+                    lastItem = this._operation[i];
+                    break;
+                }
+        }
+        if(!lastItem){
+            lastItem = (isOperator) ? this._lastOperator : this._lastNumber;
+        }
+        return lastItem;
+
+    }
+
     //seta no display a conta efetuada
     setLastNumbertoDisplay(){
-        let lastNumber ;
-        for(let i = this._operation.length-1; i >= 0; i--){
-            if(!this.isOperatior(this._operation[i])){
-                lastNumber = this._operation[i];
-                break;
-            }
-        }
-
+        let lastNumber = this.getLastIntem(false);
+        
+        if(!lastNumber) lastNumber = 0;
         this.displayCal = lastNumber;
     }
     //metodo que coloca cada valor em sequencia dentro de uma array adiciona cada valor no final de um array fazendo verificações
@@ -172,7 +222,7 @@ class CalController {
             case 'ac': 
             this.clearAll();
             break;
-            case 'c': 
+            case 'ce': 
             this.clearEntry();
             break;
             case 'soma': 
@@ -191,7 +241,7 @@ class CalController {
             this.addOperatin('%');
             break;
             case 'igual': 
-            this.clearEntry();
+            this.calc();
             break;
             case 'ponto': 
 
