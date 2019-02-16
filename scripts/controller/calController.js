@@ -2,6 +2,8 @@
 class CalController {
     //criando metodos
     constructor(){
+        this._audio = new Audio('click.mp3');
+        this._audoOnOff = false;
         this._lastOperator = '';
         this._lastNumber = '';
         this._operation = [];
@@ -12,6 +14,8 @@ class CalController {
         this._currentDate;
         this.initialize(); 
         this.initbuttonsEvents();
+        this.initiKeyborad();
+       
 
     }
     //metodo de controle de pegar um valor
@@ -41,14 +45,37 @@ class CalController {
     }
     
     set displayCal(value){
+
+        if(value.toString().length > 10){
+            this.setError();
+            return
+        }
+
         this._displayCalcEl.innerHTML = value;
+
     }
 
     set currentDate(value){
         this._currentDate = value;
     }
+    ///colando na calculadora numeros
+    pasteFromClipBord(){
+        document.addEventListener('paste', e=>{
+            let text = e.clipboardData.getData('Text');
+            this.displayCal = parseFloat(text);
+        })
+    }
 
-    
+    //copia valores da calculadora com control c
+    copyToClipBord(){
+        let input = document.createElement('input');
+        input.value = this.displayCal;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("Copy");
+        input.remove();
+    }
+
     initialize(){ 
         //seta primeiro para a cada refresh da pagina não esperar 1 segundo    
         this.setDisplayDateTime();
@@ -57,13 +84,86 @@ class CalController {
             this.setDisplayDateTime();
         }, 1000);
 
-        this.setLastNumbertoDisplay();
+        this.setLastNumbertoDisplay();        
+        this.pasteFromClipBord();
+        document.querySelectorAll('.btn-ac').forEach(btn=>{
+            btn.addEventListener('dblclick', e=>{
+                this.toggleAudio();
+            })
+        });
       
     }
+    //descobrir se o audio ta ligado ou não 
+    toggleAudio(){
+         
+        this._audoOnOff = !this._audoOnOff;
+
+    }
+
+
+    //tocar o audio
+    playAudio(){
+        if(this._audoOnOff){
+            this._audio.currentTime = 0;
+            this._audio.play();
+        }
+    }
+
+    //inicializar metodos de teclados
+    initiKeyborad(){
+        document.addEventListener('keyup', e=>{
+            this.playAudio();
+            switch(e.key){
+                case 'Escape': 
+                this.clearAll();
+                break;
+                case 'Backspace': 
+                this.clearEntry();
+                break;
+                case '+': 
+                case '-': 
+                case '*': 
+                case '/': 
+                case '%': 
+                this.addOperatin(e.key);
+                break;
+                
+                case 'Enter': 
+                case '=': 
+                this.calc();
+                break;
+                case '.': 
+                case ',': 
+                this.addDot();
+                break;
+    
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                    this.addOperatin(parseInt(e.key));
+                break;
+                case 'c':
+                if(e.ctrlKey) this.copyToClipBord();
+                break;
+            }
+
+
+        });
+    }
+
+
     //metodo que vai limpar todo o o array tornando vazio
     clearAll(){
         this._operation = [];
-
+        this._lastNumber = '';
+        this._lastOperator = '';
         this.setLastNumbertoDisplay();
 
     }
@@ -88,8 +188,14 @@ class CalController {
         }
     }
     getResult(){
-
-        return eval(this._operation.join(""));
+        try{
+            return eval(this._operation.join(""));
+        }catch(e){
+            setTimeout(()=>{
+                this.setError();
+            }, 1)
+            
+        }
     }
 
     //faz o calculo das operações
@@ -181,11 +287,6 @@ class CalController {
 
                 this.setLastOperation(value);
 
-            }else if(isNaN(value)) {
-
-                //outra coisas
-                console.log('outra coisas', value);
-
             }else{
                 this.pushOperation(value);
                 this.setLastNumbertoDisplay();
@@ -195,7 +296,7 @@ class CalController {
                 this.pushOperation(value);
             }else{
                 let newValue = this.getLastOperation().toString() + value.toString();
-                this.setLastOperation(parseInt(newValue));
+                this.setLastOperation(newValue);
                 //atualizar display
                 this.setLastNumbertoDisplay();
             }
@@ -216,8 +317,22 @@ class CalController {
             element.addEventListener(event , fn, false);
         })
     }
+
+    addDot(){
+        let lastOperation = this.getLastOperation();
+        if(typeof lastOperation === 'string' && lastOperation.split('').indexOf('.') > -1) return
+        if(this.isOperatior(lastOperation) || !lastOperation){
+            this.pushOperation('0.');
+        }else{
+            this.setLastOperation(lastOperation.toString() + '.');
+        }
+        this.setLastNumbertoDisplay();
+    }
+
+
     // metodo que vai ficar fazendo o switch para cada butão
     execBtn(value){
+        this.playAudio();
         switch(value){
             case 'ac': 
             this.clearAll();
@@ -244,7 +359,7 @@ class CalController {
             this.calc();
             break;
             case 'ponto': 
-
+            this.addDot();
             break;
 
             case '0':
